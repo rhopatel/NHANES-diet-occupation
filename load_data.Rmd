@@ -1,0 +1,33 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r include=FALSE}
+library(haven)
+library(survey)
+```
+
+
+```{r warning=FALSE}
+DBQ = read_xpt("data/DBQ_I.XPT")
+OCQ = read_xpt("data/OCQ_I.XPT")
+
+df = merge(DBQ, OCQ, by.x = "SEQN", all.x=TRUE)
+
+df_sub = df[c("DBD895", "DBQ700", "DBD910", "DBD900", "OCQ180")]
+
+
+df_sub$OCQ180 = cut(df_sub$OCQ180, breaks=c(0, 10, 20, 30, 40, 50, Inf))
+df_sub$OCQ180 = as.factor(df_sub$OCQ180)
+
+head(df_sub)
+```
+
+```{r warning=FALSE}
+design_obj = svydesign(data=df_sub, ids=~0, probs=NULL, strata=df_sub$OCQ180)
+
+print(design_obj)
+```
+
