@@ -17,11 +17,11 @@ library(readr)
 ```
 
 
-```{r warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 BG = read_csv("data/ProjectData.csv")
 names(BG)[names(BG) == 'seqn'] <- 'SEQN'
-DBQ = read_xpt("DBQ_I.XPT")
-OCQ = read_xpt("OCQ_I.XPT")
+DBQ = read_xpt("data/DBQ_I.XPT")
+OCQ = read_xpt("data/OCQ_I.XPT")
 
 df = merge(DBQ, OCQ, by.x = "SEQN", all.x=TRUE)
 df_sub = df[c("SEQN", "DBD895", "DBQ700", "DBD910", "DBD900", "OCQ180")]
@@ -46,15 +46,24 @@ head(NHANES)
 ```
 
 ```{r warning=FALSE}
-design_obj = svydesign(data=NHANES, ids=~0, probs=NULL, 
-                       strata=NHANES$OCQ180_FAC2)
 
-print(design_obj)
+#data(api)
+
+design_obj = svydesign(data=NHANES, ids=~OCQ180_FAC)
+#dclus2 <- svydesign(id=~dnum+snum, weights=~pw, data=apiclus2)
+
+model = svyglm(formula = DBD895 ~ OCQ180, design = design_obj)
+#model<-svyglm(api00~stype, design=dclus2)
+
+regTermTest(model,~OCQ180)
+
 ```
 
 ```{r}
 #meals not home prep ~ hours cat var
-svyttest(DBD895 ~ OCQ180_FAC2, design_obj)
+model = svyglm(formula = DBD895 ~ OCQ180, design = design_obj)
+
+regTermTest(model,~OCQ180)
 ```
 
 ```{r}
@@ -66,12 +75,18 @@ barplot(a, beside = TRUE)
 
 ```{r}
 #frozen meals/pizza ~ hours cat var 
-svyttest(DBD910 ~ OCQ180_FAC2, design_obj)
+model = svyglm(formula = DBD910 ~ OCQ180, design = design_obj)
+
+regTermTest(model,~OCQ180)
+
 ```
 
 ```{r}
 #meals from fast food ~ hours cat var 
-svyttest(DBD900 ~ OCQ180_FAC2, design_obj)
+model = svyglm(formula = DBD900 ~ OCQ180, design = design_obj)
+
+regTermTest(model,~OCQ180)
+
 ```
 
 
