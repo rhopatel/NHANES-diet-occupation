@@ -1,0 +1,78 @@
+---
+title: "Untitled"
+author: "Divya"
+date: "4/16/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(haven)
+library(survey)
+library(tidyverse)
+library(readr)
+```
+
+
+```{r warning=FALSE}
+BG = read_csv("data/ProjectData.csv")
+names(BG)[names(BG) == 'seqn'] <- 'SEQN'
+DBQ = read_xpt("DBQ_I.XPT")
+OCQ = read_xpt("OCQ_I.XPT")
+
+df = merge(DBQ, OCQ, by.x = "SEQN", all.x=TRUE)
+df_sub = df[c("SEQN", "DBD895", "DBQ700", "DBD910", "DBD900", "OCQ180")]
+df_new = merge(df_sub, BG, by.x = "SEQN", all.x = TRUE)
+
+df_new$inAnalysis <- !is.na(df_new$OCQ180) & df_new$ridageyr >= 22 & df_new$ridageyr <= 65
+
+```
+
+```{r}
+NHANES <- subset(df_new, inAnalysis)
+```
+
+```{r}
+NHANES$OCQ180_FAC = cut(NHANES$OCQ180, breaks=c(0, 10, 20, 30, 40, 50, Inf))
+NHANES$OCQ180_FAC = as.factor(NHANES$OCQ180_FAC)
+
+NHANES$OCQ180_FAC2 = cut(NHANES$OCQ180, breaks=c(0, 40, Inf))
+NHANES$OCQ180_FAC2 = as.factor(NHANES$OCQ180_FAC2)
+
+head(NHANES)
+```
+
+```{r warning=FALSE}
+design_obj = svydesign(data=NHANES, ids=~0, probs=NULL, 
+                       strata=NHANES$OCQ180_FAC2)
+
+print(design_obj)
+```
+
+```{r}
+#meals not home prep ~ hours cat var
+svyttest(DBD895 ~ OCQ180_FAC2, design_obj)
+```
+
+```{r}
+a <- svymean(~DBD895, design_obj)
+barplot(a, beside = TRUE)
+
+```
+
+
+```{r}
+#frozen meals/pizza ~ hours cat var 
+svyttest(DBD910 ~ OCQ180_FAC2, design_obj)
+```
+
+```{r}
+#meals from fast food ~ hours cat var 
+svyttest(DBD900 ~ OCQ180_FAC2, design_obj)
+```
+
+
+
